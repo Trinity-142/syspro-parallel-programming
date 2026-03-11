@@ -26,9 +26,13 @@ public class MyReentrantLock {
             } catch (InterruptedException e) {
                 interrupt_flag = true;
             }
-            if (delay < 128) delay *= 2;
+            if (delay < 128) {
+                delay *= 2;
+            }
         }
-        if (interrupt_flag) Thread.currentThread().interrupt();
+        if (interrupt_flag) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private boolean tryLock() {
@@ -52,7 +56,9 @@ public class MyReentrantLock {
         try {
             if (owner == Thread.currentThread()) {
                 count -= 1;
-                if (count == 0) owner = null;
+                if (count == 0) {
+                    owner = null;
+                }
             } else throw new IllegalMonitorStateException("Unlocking thread is not the owner");
         } finally {
             l.unlock();

@@ -11,32 +11,19 @@ public class MyReentrantLockTest {
      */
     static class MockNonReentrantLock implements NonReentrantLock {
         private final ReentrantLock l = new ReentrantLock();
-        private Thread owner = null;
 
         public void lock() {
-            l.lock();
-            try {
-                if (owner == Thread.currentThread()) {
-                    throw new IllegalMonitorStateException("Mock: Repeated lock on NonReentrantLock");
-                }
-                l.lock();
-                owner = Thread.currentThread();
-            } finally {
-                l.unlock();
+            if (l.isHeldByCurrentThread()) {
+                throw new IllegalMonitorStateException("Mock: Repeated lock on NonReentrantLock");
             }
+            l.lock();
         }
 
         public void unlock() {
-            l.lock();
-            try {
-                if (owner != Thread.currentThread()) {
-                    throw new IllegalMonitorStateException("Mock: Unlocking thread is not the owner");
-                }
-                owner = null;
-                l.unlock();
-            } finally {
-                l.unlock();
+            if (!l.isHeldByCurrentThread()) {
+                throw new IllegalMonitorStateException("Mock: Unlocking thread is not the owner");
             }
+            l.unlock();
         }
     }
 
@@ -78,11 +65,17 @@ public class MyReentrantLockTest {
         MyReentrantLock l = new MyReentrantLock(mockFactory);
         int[] sharedCounter = {0};
         int threadsCount = 1000;
-        int incrementsPerThread = 10;
-        CountDownLatch latch = new CountDownLatch(threadsCount);
+        int incrementsPerThread = 10000;
+        CountDownLatch start = new CountDownLatch(1);
+        CountDownLatch finish = new CountDownLatch(threadsCount);
 
         for (int i = 0; i < threadsCount; i++) {
             new Thread(() -> {
+                try {
+                    start.await();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
                 for (int j = 0; j < incrementsPerThread; j++) {
                     l.lock();
                     try {
@@ -91,11 +84,12 @@ public class MyReentrantLockTest {
                         l.unlock();
                     }
                 }
-                latch.countDown();
+                finish.countDown();
             }).start();
         }
-        latch.await();
+        start.countDown();
+        finish.await();
 
-        Assertions.assertEquals(10000, sharedCounter[0]);
+        Assertions.assertEquals(10000000, sharedCounter[0]);
     }
 }
