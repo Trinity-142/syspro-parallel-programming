@@ -24,10 +24,10 @@ public class CountersBenchmark {
     enum CounterType {
         Unsafe,
         Unfair,
-        Fair,
-        Split_1,
-        Split_2,
-        Split_10000;
+        Fair;
+        //Split_1,
+        //Split_2,
+        //Split_10000;
         // TODO: add more
 
         Counter createCounter() {
@@ -38,12 +38,14 @@ public class CountersBenchmark {
                     return new LockedCounter(false);
                 case Fair:
                     return new LockedCounter(true);
+                /*
                 case Split_1:
                     return new SplitCounter(1);
                 case Split_2:
                     return new SplitCounter(2);
                 case Split_10000:
                     return new SplitCounter(10000);
+                 */
                 default:
                     throw new IllegalArgumentException("Unexpected counter type: " + this);
             }
@@ -55,9 +57,9 @@ public class CountersBenchmark {
             "Unsafe",
             "Unfair",
             "Fair",
-            "Split_1",
-            "Split_2",
-            "Split_10000",
+            //"Split_1",
+            //"Split_2",
+            //"Split_10000",
     })
     String counterType;
     Counter counterInstance;
@@ -98,6 +100,38 @@ public class CountersBenchmark {
     @Threads(24) // should 2 * Threads.MAX
     public void incMaxMax() {
         counterInstance.increment();
+    }
+    //endregion
+
+    // region get
+    @Benchmark
+    @Threads(1)
+    public long get1() {
+        return counterInstance.get();
+    }
+
+    @Benchmark
+    @Threads(2)
+    public long get2() {
+        return counterInstance.get();
+    }
+
+    @Benchmark
+    @Threads(4)
+    public long get4() {
+        return counterInstance.get();
+    }
+
+    @Benchmark
+    @Threads(Threads.MAX)
+    public long getMax() {
+        return counterInstance.get();
+    }
+
+    @Benchmark
+    @Threads(16) // should 2 * Threads.MAX
+    public long getMaxMax() {
+        return counterInstance.get();
     }
     //endregion
 
